@@ -1,0 +1,33 @@
+*** Alerts ***
+to = mon@8864.com
+from = monitor@8864.com
+
++网络中断
+type = rtt
+pattern = !=U,==U
+comment = 网络中断
+priority = 1
+
++中断恢复
+type = rtt
+pattern = ==U,!=U,!=U
+comment = 中断恢复
+priority = 2
+
++丢包严重
+type = loss
+pattern = >50%
+comment = 丢包大于50%
+priority = 3
+
++丢包报警
+type = loss
+pattern = >10%,>10%,>10%
+comment = 连续3次丢包10%以上
+priority = 4
+
++延迟较高
+type = rtt
+pattern = >180,>180,>180
+comment = 连续3次延时180以上
+priority = 5

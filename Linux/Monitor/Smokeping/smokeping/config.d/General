@@ -1,0 +1,20 @@
+*** General ***
+owner    = Charlie.Cui
+contact  = cuiyuanlong@8864.com
+mailhost = mail.8864.com
+sendmail = /usr/sbin/sendmail
+# NOTE: do not put the Image Cache below cgi-bin
+# since all files under cgi-bin will be executed ... this is not
+# good for images.
+imgcache = /usr/local/smokeping/htdocs/cache
+imgurl   = cache
+datadir  = /usr/local/smokeping/data
+piddir  = /usr/local/smokeping/var
+cgiurl   = http://123.57.86.48/ping/smokeping.fcgi
+smokemail = /usr/local/smokeping/etc/smokemail
+tmail = /usr/local/smokeping/etc/tmail
+# specify this to get syslog logging
+syslogfacility = local0
+# each probe is now run in its own process
+# disable this to revert to the old behaviour
+# concurrentprobes = yes

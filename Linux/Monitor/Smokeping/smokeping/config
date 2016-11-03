@@ -1,0 +1,6 @@
+@include /usr/local/smokeping/etc/config.d/General
+@include /usr/local/smokeping/etc/config.d/Database
+@include /usr/local/smokeping/etc/config.d/Alerts
+@include /usr/local/smokeping/etc/config.d/Probes
+@include /usr/local/smokeping/etc/config.d/Slave
+@include /usr/local/smokeping/etc/config.d/Targets
