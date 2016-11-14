@@ -263,7 +263,7 @@ dockerfile 指定安装 redis 服务，开放 6379 端口，并启动 redis 服�
 - 创建容器
 
 ```
-docker run -d -p 6379:6379 --name sinetra_redis czero/redis:v1
+docker run -d -p 6379:6379 --name sinatra_redis czero/redis:v1
 ```
 
 - 测试连接 redis
@@ -275,3 +275,98 @@ apt install -f redis-tools
 // 连接 redis
 redis-cli -h 127.0.0.1
 ```
+
+## 连接到 redis 容器
+
+连接到 docker 容器有两种方式，
+
+- ip地址方式
+- docker link功能
+
+### ip 方式连接
+
+查看 容器 IP 信息
+```
+docker inspect sinatra_redis
+
+// 上面命令输出信息较多，可以利用-f 标志那个，过滤关键字
+docker inspect -f '{{ .NetworkSettings.IPAddress }}' sinatra_redis
+172.17.0.3
+```
+安装docker时，会创建一个名为 `docker0` 的网卡，主机上的容器都会在这个网卡上分配到一个地址，docker0 网卡，拥有一个私有IP段，`172.16～172.30`，网卡是一个虚拟的以太网桥，用于连接本地忘了和容器网络，在容器中，会以`veth`开头来命令网卡，并随机分配到一个 ip 地址，当知道了容器的ip，两个容器便可以通过 IP及端口相互访问，但是这种方式有个缺点。由于容器的 ip 地址是由 `docker0` 网卡分配的 ip 地址，当容器被重启，容器本身的 ip 地址会改变，这样当两个容量使用固定 ip 地址方式访问，这样便会连接不上。
+
+### 通过 link 连接 容器
+
+- 删除掉之前的容器
+
+```
+docker stop $(docker ps -q)
+doker rm $(docker ps -aq)
+```
+
+- 创建新的 redis 容器
+
+```
+docker run -d --name sinatra_redis czero/redis:v1
+```
+
+- 创建 web 应用连接 redis
+
+```
+docker run -p 4567 --name sinatra_web --link  sinatra_redis:db -t -i -v $PWD/sinatra_web/webapp:/opt/webapp czero/sinatra:v1 /bin/bash
+// 如果想要多个 web 应用同时连接 redis
+docker run -p 4567 --name sinatra_web1 --link  sinatra_redis:db -v $PWD/sinatra_web/webapp:/opt/webapp czero/sinatra:v1
+docker run -p 4567 --name sinatra_web2 --link  sinatra_redis:db -v $PWD/sinatra_web/webapp:/opt/webapp czero/sinatra:v1
+```
+
+`--link` 标志创建两连个容器间父子连接，这个标志需要两个参数: **一个是要连接的容器名称，另外一个便是连接后容器的别名** ,上面列子便是连接到 `sinatra_redis` 容器，并使用 `db` 作为别名。别名可以访问公开的信息，而无需关注底层容器的名字。连接让父容器可以访问子容器，并且把子容器的一些连接细节分给父容器。
+这样会在安全性上得到提高，在启动 redis 时，并没有使用 `-p` 开放容器端口，当使用`--link` 时，可以让父容器直接访问子容器的开放端口。在启动容器守护进程时，如果加上 `--ice=false` 便会关闭所有没有连接的容器通信。**被连接的容器要求必须是同一主机上的容器，不同主机上的容器不能连接**
+
+在创建两个容器连接后，会在两个地方写入连接信息
+1. /etc/hosts 文件
+
+```
+more /etc/hosts
+172.17.0.2      db 9e0071f714c4 sinatra_redis
+172.17.0.3      744d452651ca
+```
+2. 包含连接信息的环境变量中
+
+```
+env   
+HOSTNAME=744d452651ca
+DB_NAME=/sinatra_web/db
+DB_PORT_6379_TCP_PORT=6379
+TERM=xterm
+DB_PORT=tcp://172.17.0.2:6379
+DB_PORT_6379_TCP=tcp://172.17.0.2:6379
+```
+
+- 容器应用通信
+
+使用 host 或者 ENV 给应用加入连接信息，例如
+```
+// web应用代码
+uri=URI.parse(env['DB_PORT'])
+redis = redis.net(:host => uri.host, :port => uri.port )
+```
+
+**在docker run 命令中加入 --dns 或者 --dns-search 标志可以为容器定义dns**
+
+再次使用`curl`命令测试 sinatra 程序
+```
+curl -i -H 'Accept: application/json' -d 'name=Foo&status=Bar' http://localhost:4567/json                                       
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=utf-8
+Content-Length: 29
+X-Xss-Protection: 1; mode=block
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Server: WEBrick/1.3.1 (Ruby/2.3.1/2016-04-26)
+Date: Fri, 18 Mar 2016 09:08:31 GMT
+Connection: Keep-Alive
+
+{"name":"Foo","status":"Bar"}
+```
+
+再次确认 redis 是否收到更新
