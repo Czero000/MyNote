@@ -239,16 +239,21 @@ title = google.com
 alerts = someloss
 host = www.google.com
 ```
+
+
 ###Start the apache service
+
 ```
 systemctl start httpd
 ```
 
-start the smokeping services
+- start the smokeping services
+
 ```
 /usr/local/smokeping/bin/smokeping --config=/usr/local/smokeping/etc/config --logfile=/var/log/smokeing.log
 ```
 ### For startup script
+
 you can get it from here
 ```
 wget http://oss.oetiker.ch/smokeping/pub/contrib/smokeping-start-script

@@ -4,7 +4,7 @@ lVS是Linux Virtual Server的简写，即Linux虚拟服务器，是一个虚拟�
 Keepalived是一个类似于layer3，4&5交换机制的软件，主要用作RealServer的健康状态检查以及LoadBalance主机和BackUP主机之间failover的实现。高可用架：`LVS+Keepalived+Nginx/Apache+php+eaccelerator[+nfs]`
 
 ##简单负载均衡架构
-![结构图](http:7xlw3d.com1.z0.glb.clouddn.com/tech/cluster/lvs-keepalived.jpg)
+
 
 IP信息列表：
 
